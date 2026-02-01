@@ -80,7 +80,16 @@
     ;; 4. 変数との組み合わせ
     ;; (let ((env (cons (cons 'x 10) global-env))) ... ) のように拡張してテスト
     (let ((env (append '((x . 10) (y . 20)) global-env)))
-      (assert-equal '(+ x y) 30 env)))
+      (assert-equal '(+ x y) 30 env))
+
+    ;; Step 5: Lambda (ユーザー定義関数)
+
+    ;; 1. 基本的なLambdaの即時実行
+    ;; ((lambda (x) (+ x 1)) 10) -> xに10が入って計算される -> 11
+    (assert-equal '((lambda (x) (+ x 1)) 10) 11 global-env)
+
+    ;; 2. 引数が複数の場合
+    (assert-equal '((lambda (x y) (+ x y)) 10 20) 30 global-env))
 
   ;; ---------------------------------------------------------
   ;; 集計と終了コード
