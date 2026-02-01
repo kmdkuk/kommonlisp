@@ -1,5 +1,13 @@
 (defun my-eval (expr env)
   (cond
+   ((consp expr)
+     (cond
+      ((eq (car expr) `quote)
+        (cadr expr))
+      ((eq (car expr) `if)
+        (if (not (eq (my-eval (cadr expr) env) nil))
+            (my-eval (caddr expr) env)
+            (my-eval (cadddr expr) env)))))
    ((numberp expr) expr)
    ((stringp expr) expr)
    ((symbolp expr)
