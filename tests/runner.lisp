@@ -55,6 +55,33 @@
     ;; 正しく実装されていれば x (10) が返るはず
     (assert-equal '(if t x y) 10 env))
 
+  ;; Step 4: 関数適用 (Primitive Functions)
+  ;; 環境に「シンボル」と「実際のCommon Lispの関数」のペアを用意します
+  ;; #' (シャープクォート) は「関数オブジェクトそのもの」を取り出す記法です
+  (let ((global-env (list
+                     (cons '+ #'+)
+                     (cons '- #'-)
+                     (cons 'list #'list)
+                     (cons 'cons #'cons)
+                     (cons 'car #'car)
+                     (cons 'cdr #'cdr))))
+
+    ;; 1. 基本的な計算
+    (assert-equal '(+ 1 2) 3 global-env)
+
+    ;; 2. 入れ子の計算 (引数が評価されてから足し算されるか)
+    ;; (+ 1 (+ 2 3)) -> (+ 1 5) -> 6
+    (assert-equal '(+ 1 (+ 2 3)) 6 global-env)
+
+    ;; 3. リスト操作関数
+    (assert-equal '(list 1 2) '(1 2) global-env)
+    (assert-equal '(car (cons 1 2)) 1 global-env)
+
+    ;; 4. 変数との組み合わせ
+    ;; (let ((env (cons (cons 'x 10) global-env))) ... ) のように拡張してテスト
+    (let ((env (append '((x . 10) (y . 20)) global-env)))
+      (assert-equal '(+ x y) 30 env)))
+
   ;; ---------------------------------------------------------
   ;; 集計と終了コード
   ;; ---------------------------------------------------------
