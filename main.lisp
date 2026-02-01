@@ -1,6 +1,10 @@
 (defparameter *global-env* (list
                             (cons '+ #'+)
                             (cons '- #'-)
+                            (cons '* #'*)
+                            (cons '= #'=)
+                            (cons '< #'<)
+                            (cons '> #'>)
                             (cons 'list #'list)
                             (cons 'cons #'cons)
                             (cons 'car #'car)

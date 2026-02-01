@@ -109,6 +109,28 @@
   (let ((local-env '((my-var . 999))))
     (assert-equal 'my-var 999 local-env))
 
+  ;; Step 7: 再帰関数 (Recursion)
+
+  ;; 1. 階乗関数の定義
+  ;; 再帰呼び出しをするためには、= と * が必要です
+  (assert-equal '(define fact (lambda (n) (if (= n 0) 1 (* n (fact (- n 1)))))) 'fact)
+
+  ;; 2. 実行テスト
+  (assert-equal '(fact 5) 120) ;; 5 * 4 * 3 * 2 * 1 = 120
+
+  ;; 3. フィボナッチ数列 (分岐が2つある再帰)
+  ;; fib(n) = fib(n-1) + fib(n-2)
+  ;; fib(0)=0, fib(1)=1
+  ;; fib(6) -> 8
+  (assert-equal
+   '(define fib (lambda (n)
+                  (if (< n 2)
+                      n
+                      (+ (fib (- n 1)) (fib (- n 2))))))
+   'fib)
+
+  (assert-equal '(fib 6) 8)
+
   ;; ---------------------------------------------------------
   ;; 集計と終了コード
   ;; ---------------------------------------------------------
