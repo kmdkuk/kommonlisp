@@ -177,6 +177,28 @@
   (assert-equal '(multi-line 10) 11)
   (assert-equal 'temp 10) ;; 副作用が残っているか確認
 
+  ;; Step 10: Macros (defmacro)
+
+  ;; 1. マクロの定義 (unless)
+  ;; (unless pred then else) -> (if pred else then) に変換するマクロ
+  ;; ※ バッククォート (`) はCommon Lispのリーダーに依存して複雑になるため、
+  ;;    ここでは安全に (list ...) を使ってコードを組み立てます。
+  (assert-equal
+   '(defmacro unless (pred a b)
+      (list 'if pred b a))
+   'unless)
+
+  ;; 2. マクロの実行
+  ;; (= 1 2) は偽(nil) なので、a ('ok) が返るはず。
+  ;; もしこれが関数なら、'ng も評価されてしまいますが、
+  ;; if に展開されるので 'ng は評価されないはずです（重要）。
+  (assert-equal '(unless (= 1 2) 'ok 'ng) 'ok)
+  (assert-equal '(unless (= 1 1) 'ok 'ng) 'ng)
+
+  ;; 3. マクロ展開の確認 (macroexpand) - おまけ
+  ;; 実装できれば、デバッグ用にマクロがどう展開されるか見る機能もあると便利です
+  (assert-equal '(macroexpand '(unless t 1 2)) '(if t 2 1))
+
   ;; ---------------------------------------------------------
   ;; 集計と終了コード
   ;; ---------------------------------------------------------

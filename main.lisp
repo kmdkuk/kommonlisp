@@ -16,6 +16,27 @@
      (cond
       ((eq (first expr) 'progn)
         (eval-progn (rest expr) env))
+      ((eq (first expr) 'defmacro)
+        (let ((name (second expr))
+              (params (third expr))
+              (body (cdddr expr)))
+          (push (cons name (list 'macro params body env)) *global-env*)
+          name))
+      ((eq (first expr) 'macroexpand)
+        ; expr (macroexpand '(unless t a b))
+        ; (second expr) -> '(unless t a b)
+        ; target-form -> (unless t a b)
+        (let* ((target-form (my-eval (second expr) env))
+               (macro-name (first target-form))
+               (fn-def (or (cdr (assoc macro-name env))
+                           (cdr (assoc macro-name *global-env*)))))
+          (if (and (consp fn-def) (eq (first fn-def) 'macro))
+              (let ((params (second fn-def))
+                    (body (third fn-def))
+                    (saved-env (fourth fn-def))
+                    (args (rest target-form)))
+                (eval-progn body (pairlis params args saved-env)))
+              target-form)))
       ((eq (first expr) 'defun)
         (let ((name (second expr))
               (params (third expr))
@@ -26,6 +47,7 @@
               (val (my-eval (third expr) env)))
           (push (cons var val) *global-env*); letを挟まないとpushの結果が返ってしまう。
           var)); ここは変数名を返す
+      ; (quote (hoge a b))と'(hoge a b)は同じ。糖衣構文
       ((eq (first expr) 'quote)
         (second expr))
       ((eq (first expr) 'if)
@@ -33,20 +55,27 @@
             (my-eval (third expr) env)
             (my-eval (fourth expr) env)))
       ((eq (first expr) 'lambda)
-        (list
-         ; tag
-         'closure
-         ; params
-         (second expr)
-         ; body
-         (cddr expr)
-         ; saved-env
-         env))
+        (let ((params (second expr))
+              (body (cddr expr)))
+          (list 'closure params body env)))
       ; function call t=bool
       (t
-        (let ((fn (my-eval (first expr) env))
-              (args (mapcar (lambda (e) (my-eval e env)) (rest expr))))
-          (my-apply fn args)))))
+        (let ((fn-def (if (symbolp (first expr))
+                          (or (cdr (assoc (first expr) env))
+                              (cdr (assoc (first expr) *global-env*)))
+                          nil)))
+          (cond
+           ((and (consp fn-def) (eq (first fn-def) 'macro))
+             (let ((params (second fn-def))
+                   (body (third fn-def))
+                   (saved-env (fourth fn-def))
+                   (args (rest expr)))
+               (let ((expanded-expr (eval-progn body (pairlis params args saved-env))))
+                 (my-eval expanded-expr env))))
+           (t
+             (let ((fn (my-eval (first expr) env))
+                   (args (mapcar (lambda (e) (my-eval e env)) (rest expr))))
+               (my-apply fn args))))))))
    ((numberp expr) expr)
    ((stringp expr) expr)
    ((symbolp expr)
@@ -63,7 +92,6 @@
            (body (third fn))
            (saved-env (fourth fn)))
        (eval-progn body (pairlis params args saved-env))))
-
    (t (apply fn args))))
 
 (defun eval-progn (exprs env)
